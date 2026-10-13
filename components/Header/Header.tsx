@@ -1,45 +1,41 @@
 import Link from "next/link";
 import Image from "next/image";
 import "./Header.css";
+import NavLink from "./NavLink";
 
 const Header = () => {
   return (
     <header className="header">
       <div className="header-container">
         <Link href="/" className="logo">
-          <Image src="/politechnika-krakowska-logo.svg" alt="Logo" width={50} height={50} />
+          <Image
+            src="/politechnika-krakowska-logo.svg"
+            alt="Logo"
+            width={50}
+            height={50}
+          />
         </Link>
 
         <nav>
           <ul className="nav-list">
             <li>
-              <Link href="/" className="nav-link">
-                Strona główna
-              </Link>
+              <NavLink href="/">Strona główna</NavLink>
             </li>
 
             <li>
-              <Link href="/product-list" className="nav-link">
-                Lista produktów
-              </Link>
+              <NavLink href="/product-list">Lista produktów</NavLink>
             </li>
 
             <li>
-              <Link href="/order-history" className="nav-link">
-                Historia zamówień
-              </Link>
+              <NavLink href="/order-history">Historia zamówień</NavLink>
             </li>
 
             <li>
-              <Link href="/basket" className="nav-link">
-                Koszyk
-              </Link>
+              <NavLink href="/basket">Koszyk</NavLink>
             </li>
 
             <li>
-              <Link href="/about" className="nav-link">
-                O nas
-              </Link>
+              <NavLink href="/about">O nas</NavLink>
             </li>
           </ul>
         </nav>
