@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Header from "@/components/Header/Header";
 import Footer from "@/components/Footer/Footer";
+import { LocalState } from "@/components/LocalState/LocalState";
 
 export const metadata: Metadata = {
   title: "Computer Shop",
@@ -18,7 +19,7 @@ export default function RootLayout({
     <html lang="pl">
       <body>
         <Header />
-
+        <LocalState />
         <main>{children}</main>
 
         <Footer />
