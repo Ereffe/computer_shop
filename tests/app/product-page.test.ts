@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import type { Product } from "@/lib/products/product";
 import ProductDetailsPage, {
   generateMetadata,
+  dynamic,
 } from "@/app/product-list/[id]/page";
 
 const { NotFoundSignal, getProductById } = vi.hoisted(() => ({
@@ -109,6 +110,8 @@ describe("ProductDetailsPage", () => {
     expect(html).toContain("AMD Ryzen 5");
     expect(html).toContain('href="/product-list"');
     expect(html).toContain("Wróć do katalogu");
+    expect(html).toContain('href="/product-list/7/image"');
+    expect(html).toContain('aria-label="Powiększ zdjęcie: AMD Ryzen 5"');
   });
 
   it("returns not-found for malformed ids and for a missing product", async () => {
@@ -132,5 +135,11 @@ describe("ProductDetailsPage", () => {
     expect(error).toBeInstanceOf(Error);
     expect(error).not.toBeInstanceOf(NotFoundSignal);
     expect((error as Error).message).toBe("repo down");
+  });
+});
+
+describe("route config", () => {
+  it("renders on every request instead of prerendering", () => {
+    expect(dynamic).toBe("force-dynamic");
   });
 });

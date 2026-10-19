@@ -1,29 +1,28 @@
-import { cache } from "react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { getProductById } from "@/lib/products/product-repository";
-import { parseProductId } from "@/lib/products/product-id";
+import { loadProduct } from "@/lib/products/load-product";
+
+// import { getFeaturedProducts } from "@/lib/products/product-repository";
+
+// export async function generateStaticParams() {
+//   const featured = await getFeaturedProducts();
+//   return featured.map((product) => ({ id: String(product.id) }));
+// }
+
+// export const dynamicParams = true;
+export const dynamic = "force-dynamic";
 
 type ProductPageProps = {
   params: Promise<{ id: string }>;
 };
 
-const loadProduct = cache(async (rawId: string) => {
-  const id = parseProductId(rawId);
 
-  if (id === null) {
-    notFound();
-  }
-  const product = await getProductById(id);
-
-  if (product === null) {
-    notFound();
-  }
-
-  return product;
-});
+const specRow =
+  "flex items-baseline justify-between gap-4 border-t border-stone py-3.5";
+const specTerm = "text-sm text-stone";
+const specValue =
+  "text-right text-[15px] font-semibold text-chalk [overflow-wrap:anywhere]";
 
 export async function generateMetadata({
   params,
@@ -52,50 +51,67 @@ const ProductDetailsPage = async ({ params }: ProductPageProps) => {
   });
 
   return (
-    <div className="product-details">
-      <Link href="/product-list" className="product-details-back">
+    <div className="mx-auto max-w-[1100px] px-4 py-9 sm:px-6 sm:py-[50px]">
+      <Link
+        href="/product-list"
+        className="mb-6 inline-block text-[15px] font-semibold text-paper hover:underline focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-paper"
+      >
         Wróć do katalogu
       </Link>
 
-      <article className="product-details-card">
-        <div className="product-image">
+      <article className="grid grid-cols-1 overflow-hidden rounded border border-stone bg-ink shadow-[0_0_20px_rgba(24,24,23,0.35)] md:grid-cols-2">
+        <Link
+          href={`/product-list/${product.id}/image`}
+          className="flex min-h-60 cursor-zoom-in items-center justify-center bg-stone p-6 focus-visible:outline-3 focus-visible:-outline-offset-3 focus-visible:outline-paper md:min-h-80 md:p-8"
+          aria-label={`Powiększ zdjęcie: ${product.name}`}
+          scroll={false}
+        >
           <Image
             src={product.image}
             alt={product.name}
             width={600}
             height={400}
             priority
+            className="h-auto w-full max-w-[600px] object-contain"
           />
-        </div>
+        </Link>
 
-        <div className="product-info">
-          <span className="product-type">{product.type}</span>
+        <div className="flex flex-col p-6 md:p-10">
+          <span className="mb-2 self-start rounded bg-stone px-2.5 py-1 text-xs font-bold uppercase text-ink">
+            {product.type}
+          </span>
 
-          <h1>{product.name}</h1>
+          <h1 className="mb-3.5 text-2xl leading-snug font-bold text-paper md:text-3xl">
+            {product.name}
+          </h1>
 
-          <p className="product-description">{product.description}</p>
+          <p className="mb-7 text-base leading-[1.7] text-stone">
+            {product.description}
+          </p>
 
-          <dl className="product-details-specs">
-            <div>
-              <dt>Kod produktu</dt>
-              <dd>{product.code}</dd>
+          <dl>
+            <div className={specRow}>
+              <dt className={specTerm}>Kod produktu</dt>
+              <dd className={specValue}>{product.code}</dd>
             </div>
 
-            <div>
-              <dt>Kategoria</dt>
-              <dd>{product.type}</dd>
+            <div className={specRow}>
+              <dt className={specTerm}>Kategoria</dt>
+              <dd className={specValue}>{product.type}</dd>
             </div>
 
-            <div>
-              <dt>Cena</dt>
-              <dd className="product-price">{price}</dd>
+            <div className={specRow}>
+              <dt className={specTerm}>Cena</dt>
+              <dd className="text-right text-[26px] font-bold text-paper">
+                {price}
+              </dd>
             </div>
 
-            <div>
-              <dt>Stan magazynowy</dt>
+            <div className={specRow}>
+              <dt className={specTerm}>Stan magazynowy</dt>
               <dd
-                className={`product-stock ${
-                  product.amount === 0 ? "out-of-stock" : ""
+                className={`text-right text-[15px] font-semibold ${
+                  product.amount === 0 ? "text-brand" : "text-chalk"
                 }`}
               >
                 {product.amount === 0
@@ -104,9 +120,9 @@ const ProductDetailsPage = async ({ params }: ProductPageProps) => {
               </dd>
             </div>
 
-            <div>
-              <dt>Data</dt>
-              <dd>
+            <div className={specRow}>
+              <dt className={specTerm}>Data</dt>
+              <dd className={specValue}>
                 <time dateTime={product.date}>{date}</time>
               </dd>
             </div>

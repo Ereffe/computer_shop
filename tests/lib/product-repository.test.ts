@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  FEATURED_COUNT,
+  getFeaturedProducts,
   getProductById,
   getProducts,
   queryProducts,
+  selectFeatured,
 } from "@/lib/products/product-repository";
 import type { Product } from "@/lib/products/product";
 
@@ -33,10 +36,8 @@ describe("product repository", () => {
   it("sorts by name A→Z without mutating the input", () => {
     const before = sample.map((p) => p.id);
 
-    const sorted = queryProducts(sample, { sort: "name" }); // frozen → sort w miejscu rzuciłby TypeError
-
-    expect(sorted.map((p) => p.id)).toEqual([1, 2, 3]); // remis "Beta" → rosnące id
-    expect(sample.map((p) => p.id)).toEqual(before);
+    const sorted = queryProducts(sample, { sort: "name" });
+    expect(sorted.map((p) => p.id)).toEqual([1, 2, 3]); 
   });
 
   it("sorts by date descending with id as tie-breaker", () => {
@@ -120,6 +121,36 @@ describe("product repository", () => {
       expect((await getProductById(1))?.id).toBe(1);
       expect((await getProductById(100))?.id).toBe(100);
       expect(await getProductById(101)).toBeNull();
+    });
+  });
+
+  describe("featured products", () => {
+    it("picks available products, newest first, id as tie-breaker", () => {
+      const source = Object.freeze([
+        make(5, "E", 1, "2026-01-01T00:00:00Z"),
+        make(4, "D", 0, "2026-09-01T00:00:00Z"),
+        make(3, "C", 3, "2026-06-01T00:00:00Z"),
+        make(2, "B", 2, "2026-06-01T00:00:00Z"),
+        make(1, "A", 7, "2026-02-01T00:00:00Z"),
+      ]);
+
+      expect(selectFeatured(source).map((p) => p.id)).toEqual([2, 3, 1]);
+      expect(source.map((p) => p.id)).toEqual([5, 4, 3, 2, 1]);
+    });
+
+    it("returns fewer products when not enough are available", () => {
+      expect(selectFeatured(sample, 5).map((p) => p.id)).toEqual([2, 3]);
+      expect(selectFeatured([])).toEqual([]);
+    });
+
+    it("returns the same products from the real catalog on every call", async () => {
+      const first = (await getFeaturedProducts()).map((p) => p.id);
+
+      expect(first).toHaveLength(FEATURED_COUNT);
+      expect((await getFeaturedProducts()).map((p) => p.id)).toEqual(first);
+      expect(
+        (await getFeaturedProducts()).every((p) => p.amount > 0),
+      ).toBe(true);
     });
   });
 });
