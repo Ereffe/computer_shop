@@ -44,6 +44,22 @@ export function queryProducts(
   return result;
 }
 
+export const FEATURED_COUNT = 3;
+
+export function selectFeatured(
+  source: readonly Product[],
+  count: number = FEATURED_COUNT,
+): Product[] {
+  return queryProducts(source, { available: true, sort: "date" }).slice(
+    0,
+    count,
+  );
+}
+
+export async function getFeaturedProducts(): Promise<Product[]> {
+  return selectFeatured(products);
+}
+
 export async function getProducts(
   filter: ProductFilter = {},
 ): Promise<Product[]> {

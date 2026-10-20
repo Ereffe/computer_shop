@@ -120,3 +120,29 @@ Route (app)
 - Do przegladarki trafia gotowy html oraz payload rsc z wyświetlanymi danymi produktów
 - import calego jsona sprawiłby dołączenie go do bundla js wysyłanego do przeglądarki, filtracja i sortowanie działyby się w przeglądarce, blokuje to dyrektywa "server-only"
 - nie wyklucza wstepnego renderwowania na serwerze, dalej moze wystepowac hydracja.
+
+8.
+
+-czym różnią się błędny format identyfikatora, brak produktu i awaria?
+-Dlaczego folder [id] nie oznacza sam w sobie, że strona zawsze renderuje się dopiero przy żądaniu?
+-Gdzie wykonują się odczyt danych i walidacja?
+
+- bledny format obsluguje parseProductId ktory przy blednym id wywoluje notfound, brak produktu jest sprawdzane przez loadProduct w page.tsx, awaria jest obslugiwana przez try catch w loadProducts
+- segment dynamiczny mowi tylko ze id jest nieznane w czasie budowania, to konwencja routingu, a nie przełącznik strategii renderowania
+- odbywa sie to na serwerze w procesie nodejs obsługującym zadanie
+
+9.
+
+- dlaczego walidujemy adres mimo kontrolek ograniczających wybór
+- Co się stanie po przesłaniu tego samego klucza dwa razy?
+- Dlaczego filtr w useState nie odtwarza widoku z udostępnionego linku?
+
+- poniewaz uzytkownik moze recznie wpisac adres url
+- poprzez 'typeof value === "string" && allowed.includes(value)' zduplikowany klucz jest wyrzucany
+- useState zyje wylacznie w biezacej instancji komponentu
+
+10.
+
+- co zachowuje nawigacja przez Link, a co pełne przeładowanie strony?
+- Dlaczego komponent z use client może otrzymać początkowy HTML z serwera?
+  -Czy wyróżnienie sekcji wymaga pobrania całego katalogu do przeglądarki?
