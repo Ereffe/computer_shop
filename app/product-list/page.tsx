@@ -12,6 +12,7 @@ import {
   type CatalogSettings,
   type RawSearchParams,
 } from "@/lib/products/catalog-params";
+import { connection } from "next/server";
 
 const paramLabels: Record<CatalogParam, string> = {
   type: "kategoria",
@@ -120,6 +121,8 @@ const ProductListPage = async ({
 }: {
   searchParams: Promise<RawSearchParams>;
 }) => {
+  await connection();
+
   const { settings, invalid } = parseCatalogSearchParams(await searchParams);
 
   return (

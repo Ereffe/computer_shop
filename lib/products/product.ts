@@ -56,3 +56,15 @@ export function validateProducts(data: unknown): Product[] {
 
   return products;
 }
+
+export function computeNameSortKey(name: string): string {
+  const polishMap: Record<string, string> = {
+    ą: "a", ć: "c", ę: "e", ł: "l", ń: "n", ó: "o", ś: "s", ź: "z", ż: "z",
+    Ą: "a", Ć: "c", Ę: "e", Ł: "l", Ń: "n", Ó: "o", Ś: "s", Ź: "z", Ż: "z",
+  };
+
+  return name
+    .toLowerCase()
+    .replace(/[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/g, (char) => polishMap[char] ?? char)
+    .trim();
+}
