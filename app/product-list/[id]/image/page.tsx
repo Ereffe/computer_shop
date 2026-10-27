@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { loadProduct } from "@/lib/products/load-product";
+import { connection } from "next/server";
 
 type ProductImagePageProps = {
   params: Promise<{ id: string }>;
@@ -10,6 +11,7 @@ type ProductImagePageProps = {
 export async function generateMetadata({
   params,
 }: ProductImagePageProps): Promise<Metadata> {
+  await connection();
   const { id } = await params;
   const product = await loadProduct(id);
 

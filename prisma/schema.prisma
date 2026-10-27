@@ -1,0 +1,129 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Category {
+  id       Int       @id @default(autoincrement())
+  code     String    @unique @db.VarChar(16)
+  name     String    @db.VarChar(100)
+  products Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id          Int      @id @default(autoincrement())
+  code        String   @unique @db.VarChar(10)
+  name        String   @db.VarChar(255)
+  nameSortKey String   @db.Text
+  description String   @db.Text
+  image       String   @db.VarChar(255)
+  price       Int      @db.Integer
+  amount      Int      @db.Integer
+  date        DateTime @db.Timestamptz(3)
+
+  categoryId Int
+  category   Category    @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+
+  @@index([categoryId])
+  @@index([date(sort: Desc), id(sort: Asc)])
+  @@index([nameSortKey(sort: Asc), id(sort: Asc)])
+  @@map("products")
+}
+
+// Zgodny z Better Auth (model "user"); sesje i konta dostawców dojdą w Lab 09.
+model User {
+  id            String   @id
+  name          String
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+  image         String?
+  createdAt     DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime @updatedAt @db.Timestamptz(3)
+
+  cart   Cart?
+  orders Order[]
+
+  @@map("user")
+}
+
+model Cart {
+  id     Int    @id @default(autoincrement())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  items CartItem[]
+
+  @@map("carts")
+}
+
+model CartItem {
+  id        Int @id @default(autoincrement())
+  cartId    Int
+  productId Int
+  quantity  Int @db.Integer
+
+  cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@unique([cartId, productId])
+  @@index([productId])
+  @@map("cart_items")
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+// Kwoty w groszach (1 zł = 100). Order.totalCents jest BigInt, bo suma wielu pozycji
+// (ilość * cena) może przekroczyć zakres Int.
+model Order {
+  id         Int         @id @default(autoincrement())
+  number     String      @unique @db.VarChar(32)
+  userId     String
+  status     OrderStatus @default(PENDING)
+  totalCents BigInt
+  createdAt  DateTime    @default(now()) @db.Timestamptz(3)
+
+  // Restrict: historia zamówień nie znika razem z kontem.
+  user  User        @relation(fields: [userId], references: [id], onDelete: Restrict)
+  items OrderItem[]
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("orders")
+}
+
+// Snapshot z chwili zakupu: nazwa, kod i cena nie zależą od bieżącego produktu.
+// Restrict: produktu z historią zakupów nie da się usunąć (blokada zamiast archiwizacji).
+model OrderItem {
+  id             Int    @id @default(autoincrement())
+  orderId        Int
+  productId      Int
+  productCode    String @db.VarChar(10)
+  productName    String @db.VarChar(255)
+  quantity       Int    @db.Integer
+  unitPriceCents Int    @db.Integer
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@unique([orderId, productId])
+  @@index([productId])
+  @@map("order_items")
+}

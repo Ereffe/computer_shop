@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { loadProduct } from "@/lib/products/load-product";
+import { connection } from "next/server";
 
 // import { getFeaturedProducts } from "@/lib/products/product-repository";
 
@@ -27,6 +28,7 @@ const specValue =
 export async function generateMetadata({
   params,
 }: ProductPageProps): Promise<Metadata> {
+  await connection();
   const { id } = await params;
   const product = await loadProduct(id);
 
