@@ -36,6 +36,8 @@ jobs:
       - run: npm run lint
       - run: npm run test
       - run: npm run test:integration
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
       - run: npm run build
         env:
           DATABASE_URL: postgresql://ci:ci@localhost:5432/shop_test
