@@ -155,7 +155,8 @@ async function main() {
       );
     `);
     console.log("Zsynchronizowano sekwencję autoincrement ID w tabeli products");
-  });
+    // Zdalna baza: ~100 kolejnych upsertów przekracza domyślne 5 s transakcji.
+  }, { maxWait: 20_000, timeout: 120_000 });
 
   console.log("Seedowanie zakończone pomyślnie.");
 }
