@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import "./Header.css";
 import NavLink from "./NavLink";
+import AuthButton from "@/components/AuthButton/AuthButton";
 
 const Header = () => {
   return (
@@ -39,6 +40,7 @@ const Header = () => {
             </li>
           </ul>
         </nav>
+        <AuthButton />
       </div>
     </header>
   );

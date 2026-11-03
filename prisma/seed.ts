@@ -23,11 +23,23 @@ const DEMO_USER = {
   emailVerified: true,
 };
 
+// Dwaj fikcyjni użytkownicy do historii. Nie są kontami auth – do demonstracji
+// przepina ich zamówienia na prawdziwe konto skrypt scripts/link-fixture-orders.ts.
+const FIXTURE_USERS = [
+  { id: "fixture-ada", name: "Ada Fikcyjna", email: "ada.fixture@example.test", emailVerified: true },
+  { id: "fixture-bob", name: "Bob Fikcyjny", email: "bob.fixture@example.test", emailVerified: true },
+] as const;
+
 const ORDERS = [
-  { number: "ORD-2026-0001", status: "PAID", createdAt: "2026-10-01T10:00:00.000Z", lines: [[1, 2], [2, 1]] },
-  { number: "ORD-2026-0002", status: "PENDING", createdAt: "2026-10-02T11:30:00.000Z", lines: [[3, 1]] },
-  { number: "ORD-2026-0003", status: "SHIPPED", createdAt: "2026-10-03T12:15:00.500Z", lines: [[4, 3], [5, 1], [6, 2]] },
-  { number: "ORD-2026-0004", status: "CANCELLED", createdAt: "2026-10-04T09:45:00.000Z", lines: [[7, 1], [8, 1]] },
+  { userId: DEMO_USER.id, number: "ORD-2026-0001", status: "PAID", createdAt: "2026-10-01T10:00:00.000Z", lines: [[1, 2], [2, 1]] },
+  { userId: DEMO_USER.id, number: "ORD-2026-0002", status: "PENDING", createdAt: "2026-10-02T11:30:00.000Z", lines: [[3, 1]] },
+  { userId: DEMO_USER.id, number: "ORD-2026-0003", status: "SHIPPED", createdAt: "2026-10-03T12:15:00.500Z", lines: [[4, 3], [5, 1], [6, 2]] },
+  { userId: DEMO_USER.id, number: "ORD-2026-0004", status: "CANCELLED", createdAt: "2026-10-04T09:45:00.000Z", lines: [[7, 1], [8, 1]] },
+  // Historia fikcyjnych użytkowników (A i B – widoczne tylko dla właściciela)
+  { userId: "fixture-ada", number: "ORD-ADA-0001", status: "PAID", createdAt: "2026-10-05T08:00:00.000Z", lines: [[10, 1], [11, 2]] },
+  { userId: "fixture-ada", number: "ORD-ADA-0002", status: "DELIVERED", createdAt: "2026-10-06T08:30:00.000Z", lines: [[12, 1]] },
+  { userId: "fixture-bob", number: "ORD-BOB-0001", status: "SHIPPED", createdAt: "2026-10-07T09:00:00.000Z", lines: [[20, 3], [21, 1]] },
+  { userId: "fixture-bob", number: "ORD-BOB-0002", status: "PENDING", createdAt: "2026-10-08T09:30:00.000Z", lines: [[22, 2]] },
 ] as const;
 
 async function main() {
@@ -97,6 +109,13 @@ async function main() {
       update: { name: DEMO_USER.name, email: DEMO_USER.email, emailVerified: DEMO_USER.emailVerified },
       create: DEMO_USER,
     });
+    for (const u of FIXTURE_USERS) {
+      await tx.user.upsert({
+        where: { id: u.id },
+        update: { name: u.name, email: u.email, emailVerified: u.emailVerified },
+        create: u,
+      });
+    }
 
     for (const o of ORDERS) {
       const lines = o.lines.map(([productId, quantity]) => {
@@ -119,7 +138,7 @@ async function main() {
       await tx.order.create({
         data: {
           number: o.number,
-          userId: DEMO_USER.id,
+          userId: o.userId,
           status: o.status,
           totalCents,
           createdAt: new Date(o.createdAt),

@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { loadProduct } from "@/lib/products/load-product";
 import { connection } from "next/server";
+import AddToCartButton from "@/components/Basket/AddToCartButton";
 
 // import { getFeaturedProducts } from "@/lib/products/product-repository";
 
@@ -129,6 +130,12 @@ const ProductDetailsPage = async ({ params }: ProductPageProps) => {
               </dd>
             </div>
           </dl>
+
+          {product.amount > 0 && (
+            <div className="mt-6">
+              <AddToCartButton productId={product.id} />
+            </div>
+          )}
         </div>
       </article>
     </div>
