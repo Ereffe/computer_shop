@@ -6,6 +6,7 @@ const NUMBERS = ["ORD-2026-0001", "ORD-2026-0002", "ORD-2026-0003", "ORD-2026-00
 
 const loadOrders = () =>
   prisma.order.findMany({
+    where: { userId: "demo-user" }, // zamówienia fixture'owych użytkowników są testowane w order-history.test.ts
     orderBy: { number: "asc" },
     include: { items: { orderBy: { productId: "asc" } } },
   });
@@ -35,14 +36,14 @@ describe("historia zamówień", () => {
   it("pozycja ma kopię nazwy, kodu i ceny produktu", async () => {
     const o = (await loadOrders())[0];
     for (const i of o.items) {
-      const p = await prisma.product.findUniqueOrThrow({ where: { id: i.productId } });
+      const p = await prisma.product.findUniqueOrThrow({ where: { id: i.productId! } });
       expect([i.productCode, i.productName, i.unitPriceCents]).toEqual([p.code, p.name, p.price]);
     }
   });
 
   it("zmiana aktualnej ceny, nazwy i kodu produktu nie zmienia zamówień", async () => {
     const before = await loadOrders();
-    const ids = [...new Set(before.flatMap((o) => o.items.map((i) => i.productId)))];
+    const ids = [...new Set(before.flatMap((o) => o.items.map((i) => i.productId!)))];
 
     await prisma.product.updateMany({ where: { id: { in: ids } }, data: { price: { increment: 99_999 } } });
     await prisma.product.update({ where: { id: 1 }, data: { name: "Zmieniona nazwa", code: "ZMIENIONY1" } });
@@ -55,16 +56,18 @@ describe("historia zamówień", () => {
     );
   });
 
-  it("usunięcie produktu z historią jest zablokowane (Restrict), historia zostaje", async () => {
-    await expect(prisma.product.delete({ where: { id: 3 } })).rejects.toThrow();
-    expect(await prisma.orderItem.count({ where: { productId: 3 } })).toBe(1);
-    // produkt bez zamówień można usunąć
+  it("usunięcie produktu z historią zeruje productId (SetNull), a snapshot zostaje", async () => {
+    const before = await prisma.orderItem.findFirstOrThrow({ where: { productId: 3 } });
+    await expect(prisma.product.delete({ where: { id: 3 } })).resolves.toBeDefined();
+    const after = await prisma.orderItem.findUniqueOrThrow({ where: { id: before.id } });
+    expect(after).toEqual({ ...before, productId: null });
+    // produkt bez zamówień również można usunąć
     await expect(prisma.product.delete({ where: { id: 100 } })).resolves.toBeDefined();
   });
 
   it("usunięcie użytkownika z zamówieniami jest zablokowane", async () => {
     await expect(prisma.user.delete({ where: { id: "demo-user" } })).rejects.toThrow();
-    expect(await prisma.order.count()).toBe(4);
+    expect(await prisma.order.count({ where: { userId: "demo-user" } })).toBe(4);
   });
 
   it("numer zamówienia jest unikalny", async () => {

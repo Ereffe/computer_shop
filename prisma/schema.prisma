@@ -43,7 +43,6 @@ model Product {
   @@map("products")
 }
 
-// Zgodny z Better Auth (model "user"); sesje i konta dostawców dojdą w Lab 09.
 model User {
   id            String   @id
   name          String
@@ -53,10 +52,62 @@ model User {
   createdAt     DateTime @default(now()) @db.Timestamptz(3)
   updatedAt     DateTime @updatedAt @db.Timestamptz(3)
 
+  // Better Auth back-relations
+  sessions Session[]
+  accounts Account[]
+
+  // Application relations
   cart   Cart?
   orders Order[]
 
   @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime @db.Timestamptz(3)
+  token     String   @unique
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime? @db.Timestamptz(3)
+  refreshTokenExpiresAt DateTime? @db.Timestamptz(3)
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime  @updatedAt @db.Timestamptz(3)
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String    @id
+  identifier String
+  value      String
+  expiresAt  DateTime  @db.Timestamptz(3)
+  createdAt  DateTime? @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime? @updatedAt @db.Timestamptz(3)
+
+  @@index([identifier])
+  @@map("verification")
 }
 
 model Cart {
@@ -97,6 +148,8 @@ model Order {
   id         Int         @id @default(autoincrement())
   number     String      @unique @db.VarChar(32)
   userId     String
+  // Klucz idempotencji checkoutu (nullable: zamówienia z seeda go nie mają; NULL-e się nie kolidują).
+  requestKey String?     @db.VarChar(64)
   status     OrderStatus @default(PENDING)
   totalCents BigInt
   createdAt  DateTime    @default(now()) @db.Timestamptz(3)
@@ -105,23 +158,24 @@ model Order {
   user  User        @relation(fields: [userId], references: [id], onDelete: Restrict)
   items OrderItem[]
 
+  @@unique([userId, requestKey])
   @@index([userId, createdAt(sort: Desc)])
   @@map("orders")
 }
 
 // Snapshot z chwili zakupu: nazwa, kod i cena nie zależą od bieżącego produktu.
-// Restrict: produktu z historią zakupów nie da się usunąć (blokada zamiast archiwizacji).
+// SetNull: usunięcie produktu zeruje productId, a historia zostaje w snapshocie.
 model OrderItem {
   id             Int    @id @default(autoincrement())
   orderId        Int
-  productId      Int
+  productId      Int?
   productCode    String @db.VarChar(10)
   productName    String @db.VarChar(255)
   quantity       Int    @db.Integer
   unitPriceCents Int    @db.Integer
 
-  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
 
   @@unique([orderId, productId])
   @@index([productId])
